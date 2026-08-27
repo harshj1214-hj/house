@@ -19,16 +19,23 @@ artifacts = load_model()
 model = artifacts['model']
 features = artifacts['features']
 
-# 3. Clean, High-Contrast UI Styling
+# USD to INR conversion rate helper
+USD_TO_INR = 83.50
+
+def format_inr(amount):
+    if amount >= 10000000:
+        return f"₹{amount / 10000000:.2f} Cr"
+    elif amount >= 100000:
+        return f"₹{amount / 100000:.2f} Lakh"
+    return f"₹{amount:,.0f}"
+
+# 3. Clean UI Styling
 st.markdown("""
 <style>
-    /* Main container styling */
     .stApp {
         background-color: #0e1117;
         color: #fafafa;
     }
-    
-    /* Card containers */
     .report-card {
         background-color: #1a1c24;
         padding: 24px;
@@ -36,14 +43,18 @@ st.markdown("""
         border: 1px solid #2e3440;
         box-shadow: 0 4px 16px rgba(0,0,0,0.2);
     }
-    
-    .price-display {
-        font-size: 2.4rem;
+    .price-usd {
+        font-size: 2.2rem;
         font-weight: 700;
         color: #4ade80;
-        margin: 10px 0;
+        margin: 4px 0 0 0;
     }
-    
+    .price-inr {
+        font-size: 1.4rem;
+        font-weight: 600;
+        color: #facc15;
+        margin-bottom: 12px;
+    }
     .bound-container {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -52,8 +63,6 @@ st.markdown("""
         padding-top: 16px;
         border-top: 1px solid #2e3440;
     }
-
-    /* Custom Button */
     div.stButton > button:first-child {
         background-color: #22c55e !important;
         color: #052e16 !important;
@@ -63,9 +72,7 @@ st.markdown("""
         border: none !important;
         padding: 0.6rem 1.2rem !important;
         width: 100%;
-        transition: all 0.2s ease;
     }
-    
     div.stButton > button:first-child:hover {
         background-color: #16a34a !important;
         color: #ffffff !important;
@@ -78,7 +85,7 @@ st.title("🏠 Advanced Property Valuation Engine")
 st.caption("Deploying localized machine learning architectures for high-precision real estate appraisal.")
 st.divider()
 
-# 5. UI Input & Prediction Layout
+# 5. UI Layout
 left_panel, right_panel = st.columns([3, 2], gap="large")
 
 with left_panel:
@@ -139,28 +146,36 @@ with right_panel:
         
         input_df = pd.DataFrame([input_data])[features]
         log_pred = model.predict(input_df)
-        base_price = np.expm1(log_pred)[0]
+        base_price_usd = np.expm1(log_pred)[0]
 
         mae_value = 18541.37
-        lower_bound = max(0, base_price - mae_value)
-        upper_bound = base_price + mae_value
+        lower_bound_usd = max(0, base_price_usd - mae_value)
+        upper_bound_usd = base_price_usd + mae_value
+
+        # Calculate INR values
+        base_price_inr = base_price_usd * USD_TO_INR
+        lower_bound_inr = lower_bound_usd * USD_TO_INR
+        upper_bound_inr = upper_bound_usd * USD_TO_INR
 
         st.markdown(f"""
         <div class="report-card">
             <h4 style="color: #4ade80; margin: 0 0 8px 0; text-transform: uppercase; letter-spacing: 0.05em;">Valuation Report Generated</h4>
             <span style="color: #94a3b8; font-size: 0.85rem;">POINT ESTIMATE MARKET VALUE</span>
-            <div class="price-display">${base_price:,.2f}</div>
+            <div class="price-usd">${base_price_usd:,.2f}</div>
+            <div class="price-inr">({format_inr(base_price_inr)})</div>
             <div class="bound-container">
                 <div>
                     <span style="color: #94a3b8; font-size: 0.75rem;">CONSERVATIVE (-MAE)</span>
-                    <div style="font-size: 1.15rem; font-weight: 600; color: #f87171; margin-top: 4px;">${lower_bound:,.2f}</div>
+                    <div style="font-size: 1.1rem; font-weight: 600; color: #f87171; margin-top: 4px;">${lower_bound_usd:,.2f}</div>
+                    <div style="font-size: 0.85rem; color: #fca5a5;">{format_inr(lower_bound_inr)}</div>
                 </div>
                 <div>
                     <span style="color: #94a3b8; font-size: 0.75rem;">OPTIMISTIC (+MAE)</span>
-                    <div style="font-size: 1.15rem; font-weight: 600; color: #60a5fa; margin-top: 4px;">${upper_bound:,.2f}</div>
+                    <div style="font-size: 1.1rem; font-weight: 600; color: #60a5fa; margin-top: 4px;">${upper_bound_usd:,.2f}</div>
+                    <div style="font-size: 0.85rem; color: #93c5fd;">{format_inr(upper_bound_inr)}</div>
                 </div>
             </div>
         </div>
         """, unsafe_allow_html=True)
         
-        st.caption("⚠️ Core valuation metrics scale dynamically inside standard structural confidence bands.")
+        st.caption("⚠️ Conversions use a reference standard rate (1 USD ≈ ₹83.50).")
