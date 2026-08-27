@@ -13,8 +13,6 @@ artifacts = load_model()
 model = artifacts['model']
 features = artifacts['features']
 
-# 2. Web Page Configuration & Custom Styling
-st.set_page_config(page_title="AI Property Valuation Pro", page_icon="🏠", layout="wide")
 
 # Custom CSS to elevate UI appearance
 st.markdown("""
