@@ -2,7 +2,8 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import joblib
-
+import pickle
+st.set_page_config(page_title="AI Property Valuation Pro", page_icon="🏠", layout="wide")
 # 1. Load the exported model artifacts
 @st.cache_resource
 def load_model():
