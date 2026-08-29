@@ -1,5 +1,6 @@
+import os
+import pathlib
 import streamlit as st
-import streamlit.components.v1 as components
 import pandas as pd
 import numpy as np
 import joblib
@@ -11,27 +12,33 @@ st.set_page_config(
     layout="wide"
 )
 
-# --- Google Analytics 4 Tracking Code ---
-GA_TRACKING_ID = "G-K6EGDWJ6D1"
-
-ga_snippet = f"""
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id={GA_TRACKING_ID}"></script>
+# 2. Inject Google Analytics directly into Streamlit index.html
+def inject_ga():
+    ga_id = "G-K6EGDWJ6D1"
+    ga_code = f"""<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id={ga_id}"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){{dataLayer.push(arguments);}}
   gtag('js', new Date());
-  gtag('config', '{GA_TRACKING_ID}', {{
-    'cookie_flags': 'SameSite=None;Secure',
-    'send_page_view': true
-  }});
+  gtag('config', '{ga_id}');
 </script>
 """
+    try:
+        index_path = pathlib.Path(st.__file__).parent / "static" / "index.html"
+        with open(index_path, "r", encoding="utf-8") as f:
+            html_content = f.read()
+        
+        if ga_id not in html_content:
+            new_html = html_content.replace("<head>", f"<head>\n{ga_code}")
+            with open(index_path, "w", encoding="utf-8") as f:
+                f.write(new_html)
+    except Exception:
+        pass
 
-# Inject tracking tag invisibly
-components.html(ga_snippet, height=0, width=0)
+inject_ga()
 
-# 2. Load Model Artifacts
+# 3. Load Model Artifacts
 @st.cache_resource
 def load_model():
     return joblib.load('property_valuation_model.pkl')
@@ -50,7 +57,7 @@ def format_inr(amount):
         return f"₹{amount / 100000:.2f} Lakh"
     return f"₹{amount:,.0f}"
 
-# 3. Clean UI Styling
+# 4. Clean UI Styling
 st.markdown("""
 <style>
     .stApp {
@@ -101,12 +108,12 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# 4. Header Section
+# 5. Header Section
 st.title("🏠 Advanced ML Property Valuation Engine")
 st.caption("Deploying localized machine learning architectures for high-precision real estate appraisal.")
 st.divider()
 
-# 5. UI Layout
+# 6. UI Layout
 left_panel, right_panel = st.columns([3, 2], gap="large")
 
 with left_panel:
