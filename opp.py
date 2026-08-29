@@ -22,8 +22,8 @@ ga_snippet = f"""
   function gtag(){{dataLayer.push(arguments);}}
   gtag('js', new Date());
   gtag('config', '{GA_TRACKING_ID}', {{
-    'page_path': window.parent.location.pathname,
-    'page_location': window.parent.location.href
+    'cookie_flags': 'SameSite=None;Secure',
+    'send_page_view': true
   }});
 </script>
 """
