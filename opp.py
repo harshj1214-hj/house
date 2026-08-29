@@ -1,37 +1,42 @@
+import pathlib
 import streamlit as st
-import streamlit.components.v1 as components
 import pandas as pd
 import numpy as np
 import joblib
 
-# 1. Page Configuration
+# 1. Inject GA4 directly into Streamlit's root index.html
+def inject_ga4():
+    ga_id = "G-K6EGDWJ6D1"
+    ga_snippet = f"""
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id={ga_id}"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){{dataLayer.push(arguments);}}
+      gtag('js', new Date());
+      gtag('config', '{ga_id}');
+    </script>
+    """
+    try:
+        index_path = pathlib.Path(st.__file__).parent / "static" / "index.html"
+        if index_path.exists():
+            html_content = index_path.read_text(encoding="utf-8")
+            if ga_id not in html_content:
+                new_html = html_content.replace("<head>", f"<head>\n{ga_snippet}")
+                index_path.write_text(new_html, encoding="utf-8")
+    except Exception:
+        pass
+
+inject_ga4()
+
+# 2. Page Configuration
 st.set_page_config(
     page_title="Advanced ML Property Valuation Pro",
     page_icon="🏠",
     layout="wide"
 )
 
-# --- Google Analytics 4 Tracking ---
-GA_TRACKING_ID = "G-K6EGDWJ6D1"
-
-ga_snippet = f"""
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id={GA_TRACKING_ID}"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){{dataLayer.push(arguments);}}
-  gtag('js', new Date());
-  gtag('config', '{GA_TRACKING_ID}', {{
-    'cookie_flags': 'SameSite=None;Secure',
-    'send_page_view': true
-  }});
-</script>
-"""
-
-# Must have non-zero dimensions so the browser does not throttle the script execution
-components.html(ga_snippet, height=1, width=1)
-
-# 2. Load Model Artifacts
+# 3. Load Model Artifacts
 @st.cache_resource
 def load_model():
     return joblib.load('property_valuation_model.pkl')
@@ -50,7 +55,7 @@ def format_inr(amount):
         return f"₹{amount / 100000:.2f} Lakh"
     return f"₹{amount:,.0f}"
 
-# 3. Clean UI Styling
+# 4. Clean UI Styling
 st.markdown("""
 <style>
     .stApp {
@@ -101,12 +106,12 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# 4. Header Section
+# 5. Header Section
 st.title("🏠 Advanced ML Property Valuation Engine")
 st.caption("Deploying localized machine learning architectures for high-precision real estate appraisal.")
 st.divider()
 
-# 5. UI Layout
+# 6. UI Layout
 left_panel, right_panel = st.columns([3, 2], gap="large")
 
 with left_panel:
