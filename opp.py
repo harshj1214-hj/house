@@ -1,14 +1,35 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import pandas as pd
 import numpy as np
 import joblib
 
 # 1. Page Configuration
 st.set_page_config(
-    page_title="AI Property Valuation Pro", 
-    page_icon="🏠", 
+    page_title="Advanced ML Property Valuation Pro",
+    page_icon="🏠",
     layout="wide"
 )
+
+# --- Google Analytics 4 Tracking Code ---
+GA_TRACKING_ID = "G-K6EGDWJ6D1"
+
+ga_snippet = f"""
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id={GA_TRACKING_ID}"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){{dataLayer.push(arguments);}}
+  gtag('js', new Date());
+  gtag('config', '{GA_TRACKING_ID}', {{
+    'page_path': window.parent.location.pathname,
+    'page_location': window.parent.location.href
+  }});
+</script>
+"""
+
+# Inject tracking tag invisibly
+components.html(ga_snippet, height=0, width=0)
 
 # 2. Load Model Artifacts
 @st.cache_resource
@@ -81,7 +102,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # 4. Header Section
-st.title("🏠 Advanced Property Valuation Engine")
+st.title("🏠 Advanced ML Property Valuation Engine")
 st.caption("Deploying localized machine learning architectures for high-precision real estate appraisal.")
 st.divider()
 
@@ -101,7 +122,7 @@ with left_panel:
             lot_size = st.number_input("Total Lot Size (sqft)", min_value=int(area_sqft), max_value=100000, value=max(5000, int(area_sqft)), step=100)
             floors = st.selectbox("Number of Floors", options=[1, 2, 3, 4, 5], index=1)
             fireplaces = st.slider("Fireplaces Count", min_value=0, max_value=5, value=1)
-
+            
     with st.expander("🛠️ Age & Structural Quality", expanded=True):
         c3, c4 = st.columns(2)
         with c3:
@@ -111,7 +132,7 @@ with left_panel:
             renovation_status = st.slider("Renovation Tier (0=Original, 10=Modern)", min_value=0, max_value=10, value=5)
             is_duplex = st.toggle("Is this a Duplex property?", value=False)
             property_type_Duplex = 1 if is_duplex else 0
-
+            
     with st.expander("📍 Location & Environmental Amenities", expanded=True):
         c5, c6 = st.columns(2)
         with c5:
@@ -124,7 +145,7 @@ with left_panel:
 with right_panel:
     st.subheader("📊 Valuation Output")
     st.info("Adjust the specification parameters on the left and trigger the engine to generate an assessment.")
-
+    
     if st.button("Run Prediction Model", type="primary"):
         input_data = {
             'area_sqft': area_sqft,
@@ -147,16 +168,16 @@ with right_panel:
         input_df = pd.DataFrame([input_data])[features]
         log_pred = model.predict(input_df)
         base_price_usd = np.expm1(log_pred)[0]
-
         mae_value = 18541.37
+        
         lower_bound_usd = max(0, base_price_usd - mae_value)
         upper_bound_usd = base_price_usd + mae_value
-
+        
         # Calculate INR values
         base_price_inr = base_price_usd * USD_TO_INR
         lower_bound_inr = lower_bound_usd * USD_TO_INR
         upper_bound_inr = upper_bound_usd * USD_TO_INR
-
+        
         st.markdown(f"""
         <div class="report-card">
             <h4 style="color: #4ade80; margin: 0 0 8px 0; text-transform: uppercase; letter-spacing: 0.05em;">Valuation Report Generated</h4>
@@ -177,5 +198,4 @@ with right_panel:
             </div>
         </div>
         """, unsafe_allow_html=True)
-        
         st.caption("⚠️ Conversions use a reference standard rate (1 USD ≈ ₹83.50).")
