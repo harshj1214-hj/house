@@ -1,8 +1,8 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import pandas as pd
 import numpy as np
 import joblib
-from streamlit_gtag import st_gtag
 
 # 1. Page Configuration
 st.set_page_config(
@@ -11,13 +11,20 @@ st.set_page_config(
     layout="wide"
 )
 
-# 2. Fire Google Analytics Event
-st_gtag(
-    id="gtag_send_event",
-    event_name="page_view",
-    params={
-        "page_title": "AI Property Valuation Pro",
-        "page_location": "https://www.jainovation.xyz",
-        "send_to": "G-K6EGDWJ6D1"
-    }
-)
+# --- Google Analytics 4 Tracking ---
+GA_TRACKING_ID = "G-K6EGDWJ6D1"
+
+ga_snippet = f"""
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id={GA_TRACKING_ID}"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){{dataLayer.push(arguments);}}
+  gtag('js', new Date());
+  gtag('config', '{GA_TRACKING_ID}', {{
+    'send_page_view': true
+  }});
+</script>
+"""
+
+components.html(ga_snippet, height=0, width=0)
